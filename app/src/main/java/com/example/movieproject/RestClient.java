@@ -1,0 +1,47 @@
+package com.example.movieproject;
+
+import android.util.Log;
+
+import com.bumptech.glide.BuildConfig;
+
+import java.io.IOException;
+import java.net.URL;
+
+import okhttp3.HttpUrl;
+import okhttp3.logging.HttpLoggingInterceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+public class RestClient {
+    private static MovieService service;
+
+    public static MovieService getMovieService(){
+        if (service ==null) {
+            String API_BASE_URL = "http://www.omdbapi.com";
+
+            HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+            if (BuildConfig.DEBUG){
+                interceptor.level(HttpLoggingInterceptor.Level.BODY);
+            } else {
+                interceptor.level(HttpLoggingInterceptor.Level.NONE);
+            }
+
+            OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+            httpClient.addInterceptor(interceptor);
+
+            httpClient.addInterceptor(chain -> {
+                Request request = chain.request();
+                String newUrl = request.url().toString().replace("www.omdbapi.com", "www.omdbapi.com?apikey=2268147d&s=batman");
+                return chain.proceed(request.newBuilder().url(newUrl).build());
+                    });
+
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(API_BASE_URL).client(httpClient.build()).addConverterFactory(GsonConverterFactory.create()).build();
+
+            service = retrofit.create(MovieService.class);
+        }
+        return service;
+    }
+}
